@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -126,16 +127,22 @@ namespace ProLeakCore
             var coreScriptsCount = C.ScriptsEmbeddedFilePaths.Count;
             var ln = Environment.NewLine;
             const string tab = "    ";
+            var sb = new StringBuilder();
 
             foreach (var embeddedFilePath in C.ScriptsEmbeddedFilePaths)
             {
                 using TextReader r = new StreamReader(_assembly.GetManifestResourceStream(embeddedFilePath)
                                                       ?? throw new FileNotFoundException(embeddedFilePath));
 
+                sb.Clear();
+                while (r.ReadLine() is { } line) {
+                    sb.AppendLine($"{tab}{tab}{line}");
+                }
+
                 lines[C.ScriptsInsertLine] = 
                       $"{ln}{tab}<!-- ProLeakCore script #{coreScriptsCount} ({embeddedFilePath}) -->{ln}"
-                    + $"{tab}<script type='text/javascript' id='script-pl-js-n{coreScriptsCount}'>{ln}"
-                    + $"{r.ReadToEnd()}{ln}{tab}</script>{ln}" 
+                    + $"{tab}<script type='text/javascript' id='script-pl-js-n{coreScriptsCount}'>{ln}{ln}"
+                    + $"{sb.ToString()}{ln}{tab}</script>{ln}" 
                     + lines[C.ScriptsInsertLine];
 
                 coreScriptsCount--;
