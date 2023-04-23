@@ -98,7 +98,7 @@ namespace ProLeak
         
         protected ProLeakMod() {
             // this.Core = null;
-            // How to contact the Core inside each ProLeakMod? Or do it differently ?
+            // Find a good design for the exchange between the API and the Core
             // protected ProLeakCore Core { get; private set; }
             
             var derivedType = this.GetType();
@@ -107,7 +107,7 @@ namespace ProLeak
             this.Settings = new List<ModSetting<Type>>();
         }
 
-        // How to contact the Core ?
+        // Design the contact to the Core
         // protected ProLeakCore Core { get; private set; }
         
         protected ModInfos Infos { get; private set; }
