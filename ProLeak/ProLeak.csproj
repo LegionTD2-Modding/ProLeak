@@ -23,4 +23,10 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
   
+  <ItemGroup>
+    <Reference Include="ProLeakCore">
+      <HintPath>..\ProLeakCore\bin\Debug\netstandard2.0\ProLeakCore.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
 </Project>
