@@ -111,6 +111,7 @@ namespace ProLeakCore
         }
 
         private void Patch() {
+            // TODO
             /*
             _trPresetsOptionsSections
                 .Method("Add", new object[]{C.CfgLegionField, C.CfgLegionSection})
@@ -119,6 +120,7 @@ namespace ProLeakCore
         }
 
         private void UnPatch() {
+            // TODO
             /*
             if (_trPresetsOptionsSections
                 .Method("ContainsKey", new object[]{C.CfgLegionField})
@@ -130,11 +132,17 @@ namespace ProLeakCore
         }
         
         private void CreateModdedGateway() {
+            
             var lines = File.ReadAllLines(C.GatewayFilePath);
-            var resStream = _assembly.GetManifestResourceStream(C.GatewayEmbedded);
-            using (var r = new StreamReader(resStream ?? throw new FileNotFoundException(C.GatewayEmbedded))) {
-                lines[C.ScriptsInsertLine] = r.ReadToEnd() + Environment.NewLine + lines[C.ScriptsInsertLine];
+            
+            foreach (var embeddedFilePath in C.ScriptsEmbeddedFilePaths)
+            {
+                var resStream = _assembly.GetManifestResourceStream(embeddedFilePath);
+                using (var r = new StreamReader(resStream ?? throw new FileNotFoundException(embeddedFilePath))) {
+                    lines[C.ScriptsInsertLine] = r.ReadToEnd() + Environment.NewLine + lines[C.ScriptsInsertLine];
+                }
             }
+            
             File.WriteAllLines(C.GatewayModdedFilePath, lines);
         }
 
@@ -164,8 +172,8 @@ namespace ProLeakCore
 
         [HarmonyPrefix]
         private static bool SendCreateViewPre(ref string ___m_Page) {
-            if (___m_Page.Equals(C.GatewayFile)) {
-                ___m_Page = C.GatewayFileModded;
+            if (___m_Page.Equals(C.GatewayFilePathUI)) {
+                ___m_Page = C.GatewayModdedFilePathUI;
             }
             return true;
         }
@@ -198,7 +206,8 @@ namespace ProLeakCore
             ref object ___config,
             ref Dictionary<string, object> ___options,
             ref Dictionary<string, Action<string>> ___OptionsHandlers) {
-            
+            // TODO
+            /*
             if (!___OptionsHandlers.ContainsKey(C.CfgLegionField)) {
                 ___OptionsHandlers.Add(C.CfgLegionField, delegate(string value) {
 
@@ -237,10 +246,8 @@ namespace ProLeakCore
             }
             
             ___options.Add(C.CfgLegionField, optionValue);
-            P.Logger.LogInfo($"Custom mod option {C.CfgLegionField} added");
+            P.Logger.LogInfo($"Custom mod option {C.CfgLegionField} added");*/
         }
         
     }
-    
-
 }
