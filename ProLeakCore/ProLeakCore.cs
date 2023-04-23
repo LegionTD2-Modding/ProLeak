@@ -19,14 +19,16 @@ namespace ProLeakCore
         internal static readonly string GatewayFolderPath;
         internal static readonly string GatewayFilename;
         internal static readonly string GatewayModdedFilename;
+        internal static readonly List<string> ScriptsFilenames;
+        internal static readonly int ScriptsInsertLine;
         
         internal static string GatewayFilePathUI;
         internal static string GatewayModdedFilePathUI;
         internal static string GatewayFilePath;
         internal static string GatewayModdedFilePath;
-        
+
         internal static List<string> ScriptsFilePaths;
-        internal static readonly int ScriptsInsertLine;
+        internal static List<string> ScriptsEmbeddedFilePaths;
 
         static Constants()
         {
@@ -39,15 +41,25 @@ namespace ProLeakCore
             
             GatewayFilePathUI = $"coui://uiresources/AeonGT/{GatewayFilename}";
             GatewayModdedFilePathUI = $"coui://uiresources/AeonGT/{GatewayModdedFilename}";
-
+            
             GatewayFilePath = Path.Combine(GatewayFolderPath, GatewayFilename);
             GatewayModdedFilePath = Path.Combine(GatewayFolderPath, GatewayModdedFilename);
             
-            ScriptsFilePaths = new List<string>{
-                Path.Combine(GatewayFolderPath, "js/api.js"),
-                Path.Combine(GatewayFolderPath, "js/settings.js")
-            };
             ScriptsInsertLine = 100;
+            ScriptsFilenames = new List<string>{
+                "js/api.js",
+                "js/settings.js"
+            };
+
+            ScriptsFilePaths = new List<string>();
+            ScriptsEmbeddedFilePaths = new List<string>();
+            
+            foreach (var filename in ScriptsFilenames)
+            {
+                ScriptsFilePaths.Add(Path.Combine(GatewayFolderPath, filename));
+                ScriptsEmbeddedFilePaths.Add($"ProLeak.Core.Scripts.{filename}");
+            }
+
         }
     }
 
