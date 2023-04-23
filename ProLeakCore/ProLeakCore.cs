@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
@@ -43,13 +44,8 @@ namespace ProLeakCore
                 "settings.js"
             };
 
-            ScriptsEmbeddedFilePaths = new List<string>();
-            
-            foreach (var filename in scriptsFilenames)
-            {
-                ScriptsEmbeddedFilePaths.Add($"ProLeakCore.scripts.{filename}");
-            }
-            //ScriptsEmbeddedFilePaths.Reverse();
+            ScriptsEmbeddedFilePaths = scriptsFilenames.Select(f => $"ProLeakCore.scripts.{f}").ToList();
+            ScriptsEmbeddedFilePaths.Reverse();
 
         }
     }
