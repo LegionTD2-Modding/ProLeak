@@ -123,20 +123,30 @@ namespace ProLeakCore
         private void CreateModdedGateway() {
             
             var lines = File.ReadAllLines(C.GatewayFilePath);
-            
+            var coreScriptsCount = C.ScriptsEmbeddedFilePaths.Count;
+            var ln = Environment.NewLine;
+            const string tab = "    ";
+
             foreach (var embeddedFilePath in C.ScriptsEmbeddedFilePaths)
             {
                 using TextReader r = new StreamReader(_assembly.GetManifestResourceStream(embeddedFilePath)
                                                       ?? throw new FileNotFoundException(embeddedFilePath));
-                lines[C.ScriptsInsertLine] = r.ReadToEnd() + Environment.NewLine + lines[C.ScriptsInsertLine];
+
+                lines[C.ScriptsInsertLine] = 
+                      $"{ln}{tab}<!-- ProLeakCore script #{coreScriptsCount} ({embeddedFilePath}) -->{ln}"
+                    + $"{tab}<script type='text/javascript' id='script-pl-js-n{coreScriptsCount}'>{ln}"
+                    + $"{r.ReadToEnd()}{ln}{tab}</script>{ln}" 
+                    + lines[C.ScriptsInsertLine];
+
+                coreScriptsCount--;
             }
-            
+
             File.WriteAllLines(C.GatewayModdedFilePath, lines);
         }
 
         private static void DeleteModdedGateway() {
-            if (File.Exists(C.GatewayModdedFilePathUI)) {
-                File.Delete(C.GatewayModdedFilePathUI);
+            if (File.Exists(C.GatewayModdedFilePath)) {
+                File.Delete(C.GatewayModdedFilePath);
             }
         }
     }
