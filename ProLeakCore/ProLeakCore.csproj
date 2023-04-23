@@ -6,7 +6,7 @@
     <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <PackageId>ltd2.mods.ProLeak.Core.Kidev</PackageId>
+    <PackageId>ltd2.mods.Kidev.ProLeakCore</PackageId>
     <Title>ProLeakCore</Title>
     <Authors>Kidev</Authors>
     <NoWarn>$(NoWarn);CS0436</NoWarn>
@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="scripts\api.js" />
-    <None Include="scripts\settings.js" />
+    <EmbeddedResource Include="scripts/api.js" />
+    <EmbeddedResource Include="scripts/settings.js" />
   </ItemGroup>
   
 </Project>

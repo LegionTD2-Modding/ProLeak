@@ -15,50 +15,41 @@ namespace ProLeakCore
     internal static class Constants
     {
         internal static readonly string ClientVersionSupported;
-        
-        internal static readonly string GatewayFolderPath;
-        internal static readonly string GatewayFilename;
-        internal static readonly string GatewayModdedFilename;
-        internal static readonly List<string> ScriptsFilenames;
         internal static readonly int ScriptsInsertLine;
-        
-        internal static string GatewayFilePathUI;
-        internal static string GatewayModdedFilePathUI;
-        internal static string GatewayFilePath;
-        internal static string GatewayModdedFilePath;
-
-        internal static List<string> ScriptsFilePaths;
-        internal static List<string> ScriptsEmbeddedFilePaths;
+        internal static readonly string GatewayFilePathUI;
+        internal static readonly string GatewayModdedFilePathUI;
+        internal static readonly string GatewayFilePath;
+        internal static readonly string GatewayModdedFilePath;
+        internal static readonly List<string> ScriptsEmbeddedFilePaths;
 
         static Constants()
         {
             ClientVersionSupported = "10.03.3";
             
-            GatewayFolderPath = Path.Combine(Paths.GameRootPath, "Legion TD 2_Data", "uiresources", "AeonGT");
+            var gatewayFolderPath = Path.Combine(Paths.GameRootPath, "Legion TD 2_Data", "uiresources", "AeonGT");
         
-            GatewayFilename = "gateway.html";
-            GatewayModdedFilename = $"ProLeak_{GatewayFilename}";
+            const string gatewayFilename = "gateway.html";
+            const string gatewayModdedFilename = $"ProLeak_{gatewayFilename}";
             
-            GatewayFilePathUI = $"coui://uiresources/AeonGT/{GatewayFilename}";
-            GatewayModdedFilePathUI = $"coui://uiresources/AeonGT/{GatewayModdedFilename}";
+            GatewayFilePathUI = $"coui://uiresources/AeonGT/{gatewayFilename}";
+            GatewayModdedFilePathUI = $"coui://uiresources/AeonGT/{gatewayModdedFilename}";
             
-            GatewayFilePath = Path.Combine(GatewayFolderPath, GatewayFilename);
-            GatewayModdedFilePath = Path.Combine(GatewayFolderPath, GatewayModdedFilename);
+            GatewayFilePath = Path.Combine(gatewayFolderPath, gatewayFilename);
+            GatewayModdedFilePath = Path.Combine(gatewayFolderPath, gatewayModdedFilename);
             
             ScriptsInsertLine = 100;
-            ScriptsFilenames = new List<string>{
-                "js/api.js",
-                "js/settings.js"
+            var scriptsFilenames = new List<string>{
+                "api.js",
+                "settings.js"
             };
 
-            ScriptsFilePaths = new List<string>();
             ScriptsEmbeddedFilePaths = new List<string>();
             
-            foreach (var filename in ScriptsFilenames)
+            foreach (var filename in scriptsFilenames)
             {
-                ScriptsFilePaths.Add(Path.Combine(GatewayFolderPath, filename));
-                ScriptsEmbeddedFilePaths.Add($"ProLeak.Core.Scripts.{filename}");
+                ScriptsEmbeddedFilePaths.Add($"ProLeakCore.scripts.{filename}");
             }
+            //ScriptsEmbeddedFilePaths.Reverse();
 
         }
     }
@@ -69,6 +60,8 @@ namespace ProLeakCore
     {
         private readonly Assembly _assembly = Assembly.GetExecutingAssembly();
         private readonly Harmony _harmony = new(PluginInfo.PLUGIN_GUID);
+        
+        //internal;
 
         internal new static ManualLogSource Logger;
 
@@ -137,10 +130,9 @@ namespace ProLeakCore
             
             foreach (var embeddedFilePath in C.ScriptsEmbeddedFilePaths)
             {
-                var resStream = _assembly.GetManifestResourceStream(embeddedFilePath);
-                using (var r = new StreamReader(resStream ?? throw new FileNotFoundException(embeddedFilePath))) {
-                    lines[C.ScriptsInsertLine] = r.ReadToEnd() + Environment.NewLine + lines[C.ScriptsInsertLine];
-                }
+                using TextReader r = new StreamReader(_assembly.GetManifestResourceStream(embeddedFilePath)
+                                                      ?? throw new FileNotFoundException(embeddedFilePath));
+                lines[C.ScriptsInsertLine] = r.ReadToEnd() + Environment.NewLine + lines[C.ScriptsInsertLine];
             }
             
             File.WriteAllLines(C.GatewayModdedFilePath, lines);
