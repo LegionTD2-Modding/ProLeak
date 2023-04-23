@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>ProLeakCore</AssemblyName>
-    <Description>This the core of ProLeak</Description>
+    <Description>ProLeak Core</Description>
     <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Data/ProLeak_JS_API.html" />
-	 <EmbeddedResource Include="Data/ProLeak_JS_ModTab.html" />
+    <None Include="scripts\api.js" />
+    <None Include="scripts\settings.js" />
   </ItemGroup>
   
 </Project>

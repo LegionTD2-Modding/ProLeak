@@ -10,7 +10,6 @@ using HarmonyLib;
 namespace ProLeakCore
 {
     using P = Plugin;
-    using C = Constants;
 
     [BepInProcess("Legion TD 2.exe")]
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
