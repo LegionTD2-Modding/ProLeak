@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Logging;
 using ProLeakCore;
+using Unity.Baselib.LowLevel;
+using UnityEngine;
+using Logger = UnityEngine.Logger;
 
 namespace ProLeak
 {
+   
     [AttributeUsage(AttributeTargets.Class)]
     public class ModInfos : Attribute
     {
@@ -76,43 +81,55 @@ namespace ProLeak
         }
     }
     
-    public abstract class ProLeakMod
+    public abstract class ProLeakMod : MonoBehaviour
     {
         public abstract void ModInit();
-
-        // Set a restrictive enough type T
+        
+        /*
+         // Set a restrictive enough type T
         public T RegisterSetting<T>(string name, T value, string nameAlias) {
-            this.Settings.Add(new ModSetting<T>(name, value, nameAlias));
+            //this.Settings.Add(new ModSetting<T>(name, value, nameAlias));
             return value;
-        }
+        }*/
         
         // RegisterEvent()
 
-        public List<string> GetModScriptsFiles() {
-            return this.Scripts.Select(s => s.ScriptFile).ToList();
-        }
-
+        /*
         public ModSetting<T> GetSetting<T>(string name) {
             return this.Settings.Find<T>(s => s.Name.Equals(name));
-        }
+        }*/
         
         protected ProLeakMod() {
-            // this.Core = null;
-            // Find a good design for the exchange between the API and the Core
-            // protected ProLeakCore Core { get; private set; }
-            
             var derivedType = this.GetType();
             this.Infos = derivedType.GetCustomAttribute<ModInfos>();
             this.Scripts = derivedType.GetCustomAttributes<ModScript>().ToList();
             this.Settings = new List<ModSetting<Type>>();
         }
 
-        // Design the contact to the Core
-        // protected ProLeakCore Core { get; private set; }
+        private void Awake() {
+            var registered = _core.SendRegisterModRequest(this);
+            if (!registered) {
+                Log("Unable to register mod with Core", LogLevel.Error);
+                return;
+            }
+            this.ModInit();
+        }
+
+        public void Log(string data, LogLevel level = LogLevel.Info) {
+            _logger.Log(level, $"({Infos.Name}) {data}");
+        }
         
-        protected ModInfos Infos { get; private set; }
+        // Since parameter Scripts is 'private set', is this GetScripts useful in any way ?
+        public IReadOnlyList<ModScript> GetScripts() {
+            return this.Scripts.AsReadOnly();
+        }
+        
+        public ModInfos Infos { get; private set; }
         public List<ModScript> Scripts { get; private set; }
         public List<ModSetting<Type>> Settings { get; private set; }
+        
+        private readonly ProLeakCore.ProLeakCore _core = ProLeakCore.ProLeakCore.Instance;
+        private readonly ManualLogSource _logger = ProLeakCore.ProLeakCore.Logger;
     }
 
 

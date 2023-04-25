@@ -27,5 +27,11 @@
     <EmbeddedResource Include="scripts/api.js" />
     <EmbeddedResource Include="scripts/settings.js" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ProLeak">
+      <HintPath>..\ProLeak\bin\Debug\netstandard2.0\ProLeak.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   
 </Project>

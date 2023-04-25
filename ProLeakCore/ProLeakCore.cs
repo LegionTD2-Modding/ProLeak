@@ -8,10 +8,12 @@ using System.Text;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using ProLeak;
 
 namespace ProLeakCore
 {
-    using P = Plugin;
+    using Core = ProLeakCore;
+    using API = ProLeak;
     using C = Constants;
     
     internal static class Constants
@@ -53,20 +55,34 @@ namespace ProLeakCore
 
     [BepInProcess("Legion TD 2.exe")]
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-    public class Plugin : BaseUnityPlugin
+    public class ProLeakCore : BaseUnityPlugin
     {
+        public static ProLeakCore Instance { get; set; }
+        
+        private List<ProLeakMod> _registeredMods = new List<ProLeakMod>();
+
         private readonly Assembly _assembly = Assembly.GetExecutingAssembly();
         private readonly Harmony _harmony = new(PluginInfo.PLUGIN_GUID);
-        
-        //internal;
 
-        internal new static ManualLogSource Logger;
+        public new static ManualLogSource Logger;
 
         private Traverse _trPresetsOptionsSections;
         private string _configApiClientVersion;
 
-        public void Awake() {
+        private void Awake() {
+            
+            if (ProLeakCore.Instance == null) {
+                ProLeakCore.Instance = this;
+                DontDestroyOnLoad(gameObject);
+            } else {
+                Destroy(gameObject);
+            }
+            
             Logger = base.Logger;
+
+            OnRegisterModRequest += (object sender, RegisterModEventArgs args) => {
+                this._registeredMods.Add(args.Mod);
+            };
             
             var typeConfigApi = AccessTools.TypeByName("Assets.Api.ConfigApi");
             var trConfigApi = Traverse.Create(typeConfigApi);
@@ -93,6 +109,44 @@ namespace ProLeakCore
             }
             
             Logger.LogInfo($"{PluginInfo.PLUGIN_GUID} is loaded!");
+        }
+
+        public delegate void RegisterModHandler(object sender, RegisterModEventArgs args);
+        public event RegisterModHandler OnRegisterModRequest;
+        public bool SendRegisterModRequest(object sender) {
+            if (sender == null) {
+                return false;
+            }
+            var mod = sender as ProLeakMod;
+            var args = new RegisterModEventArgs {
+                Mod = mod
+            };
+            OnRegisterModRequest?.Invoke(sender, args);
+            return true;
+        }
+
+        // TODO
+        public delegate void RegisterSettingHandler(object sender, EventArgs e);
+        public event RegisterSettingHandler OnRegisterSettingRequest;
+        public bool SendRegisterSettingRequest(object sender, object data) { // TODO data type
+            var mod = sender as ProLeakMod;
+            var args = new RegisterSettingEventArgs {
+                // TODO
+            };
+            OnRegisterSettingRequest?.Invoke(sender, args);
+            return true;
+        }
+        
+        // TODO
+        public delegate void RegisterEventHandler(object sender, EventArgs e);
+        public event RegisterEventHandler OnRegisterEventRequest;
+        public bool SendRegisterEventRequest(object sender, object data) { // TODO data type
+            var mod = sender as object;
+            var args = new RegisterEventEventArgs {
+                // TODO
+            };
+            OnRegisterEventRequest?.Invoke(sender, args);
+            return true;
         }
         
         public void OnDestroy() {
@@ -184,6 +238,21 @@ namespace ProLeakCore
         }
     }
     
+    public class RegisterModEventArgs : EventArgs
+    {
+        public ProLeakMod Mod;
+    }
+    
+    public class RegisterSettingEventArgs : EventArgs
+    {
+        // TODO
+    }
+    
+    public class RegisterEventEventArgs : EventArgs
+    {
+        // TODO
+    }
+    
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     [SuppressMessage("ReSharper", "UnusedMember.Local")]
     [HarmonyPatch]
@@ -223,7 +292,7 @@ namespace ProLeakCore
 
                     _trHudApi.Method("TriggerHudEvent", argsTriggerHudEvent).GetValue();
                 });
-                P.Logger.LogInfo($"Custom mod option {C.CfgLegionField} handler assigned");
+                Core.Logger.LogInfo($"Custom mod option {C.CfgLegionField} handler assigned");
             }
             
             var optionValue = Activator.CreateInstance(_typeOptionValue);
@@ -246,12 +315,12 @@ namespace ProLeakCore
             if (___options.ContainsKey(C.CfgLegionField)) {
                 ___options[C.CfgLegionField] = optionValue;
                 
-                P.Logger.LogInfo($"Custom mod option {C.CfgLegionField} loaded");
+                Core.Logger.LogInfo($"Custom mod option {C.CfgLegionField} loaded");
                 return;
             }
             
             ___options.Add(C.CfgLegionField, optionValue);
-            P.Logger.LogInfo($"Custom mod option {C.CfgLegionField} added");*/
+            Core.Logger.LogInfo($"Custom mod option {C.CfgLegionField} added");*/
         }
         
     }
