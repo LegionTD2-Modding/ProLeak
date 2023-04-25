@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using BepInEx;
 using BepInEx.Logging;
-using ProLeakCore;
-using Unity.Baselib.LowLevel;
 using UnityEngine;
-using Logger = UnityEngine.Logger;
 
 namespace ProLeak
 {
-   
+    using Core = ProLeakCore.ProLeakCore;
+    
     [AttributeUsage(AttributeTargets.Class)]
     public class ModInfos : Attribute
     {
@@ -44,93 +41,108 @@ namespace ProLeak
         public string ScriptFile { get; private set; }
     }
     
-    public class ModSetting<T>
+    public interface IModSetting
     {
-        public ModSetting(string name, T value, List<string> aliases) {
-            this.Name = name;
-            this.ValueType = typeof (T);
-            this.DefaultValue = value;
-            this.Value = value;
-            this.Aliases = aliases;
-        }
+        string Name { get; }
+    }
 
-        public string Name { get; private set; }
-        public Type ValueType { get; private set; }
-        public T Value { get; private set; }
+    public class ModSetting<T> : IModSetting
+    {
+        public string Name { get; set; }
+        public T Value { get; set; }
         public T DefaultValue { get; private set; }
-        public List<string> Aliases { get; private set; }
+        public List<string> Aliases { get; set; }
 
-        public void ResetToDefaultValue() {
-            this.Value = this.DefaultValue;
-        }
-
-        public void SetValue(T value) {
-            this.Value = value;
-        }
-
-        public T GetValue() {
-            return this.Value;
-        }
-
-        public string GetAliasedName() {
-            return this.Aliases.Count <= 0 ? "" : this.Aliases[0];
-        }
-        
-        public string GetAliasedValue(int value) {
-            return this.Aliases.Count <= value ? "" : this.Aliases[value];
+        public ModSetting(string settingName, T value, List<string> aliases)
+        {
+            Name = settingName;
+            Value = value;
+            DefaultValue = value;
+            Aliases = aliases;
         }
     }
-    
+
     public abstract class ProLeakMod : MonoBehaviour
     {
         public abstract void ModInit();
-        
-        /*
-         // Set a restrictive enough type T
-        public T RegisterSetting<T>(string name, T value, string nameAlias) {
-            //this.Settings.Add(new ModSetting<T>(name, value, nameAlias));
-            return value;
-        }*/
-        
-        // RegisterEvent()
+        public abstract void ModCleanup();
 
-        /*
-        public ModSetting<T> GetSetting<T>(string name) {
-            return this.Settings.Find<T>(s => s.Name.Equals(name));
-        }*/
+        public bool RegisterSetting<T>(string settingName, T value, List<string> aliases)
+        {
+            if (Settings.ContainsKey(settingName)) {
+                return false;
+            }
+            var setting = new ModSetting<T>(settingName, value, aliases);
+            Settings.Add(settingName, setting);
+            return true;
+        }
         
+        public bool UnregisterSetting<T>(string settingName)
+        {
+            if (!Settings.ContainsKey(settingName)) {
+                return false;
+            }
+            Settings.Remove(settingName);
+            return true;
+        }
+        
+        public bool SetSettingValue<T>(string settingName, T value)
+        {
+            if (!Settings.TryGetValue(settingName, out var setting) || setting is not ModSetting<T> typedSetting) {
+                return false;
+            }
+            typedSetting.Value = value;
+            Settings[settingName] = typedSetting;
+            return true;
+        }
+
+        public bool GetSettingValue<T>(string settingName, out T value)
+        {
+            if (Settings.TryGetValue(settingName, out var setting) && setting is ModSetting<T> typedSetting)
+            {
+                value = typedSetting.Value;
+                return true;
+            }
+            value = default(T);
+            return false;
+        }
+
         protected ProLeakMod() {
             var derivedType = this.GetType();
             this.Infos = derivedType.GetCustomAttribute<ModInfos>();
             this.Scripts = derivedType.GetCustomAttributes<ModScript>().ToList();
-            this.Settings = new List<ModSetting<Type>>();
+            this.Settings = new Dictionary<string, IModSetting>();
         }
 
         private void Awake() {
             var registered = _core.SendRegisterModRequest(this);
             if (!registered) {
-                Log("Unable to register mod with Core", LogLevel.Error);
+                Log("Unable to register mod with Core", LogLevel.Fatal);
+                this.enabled = false;
                 return;
             }
             this.ModInit();
         }
 
+        private void OnDestroy() {
+            _core.SendUnregisterModRequest(this);
+            this.ModCleanup();
+        }
+
+        private void OnDisable() {
+            _core.SendUnregisterModRequest(this);
+            this.ModCleanup();
+        }
+
         public void Log(string data, LogLevel level = LogLevel.Info) {
             _logger.Log(level, $"({Infos.Name}) {data}");
         }
-        
-        // Since parameter Scripts is 'private set', is this GetScripts useful in any way ?
-        public IReadOnlyList<ModScript> GetScripts() {
-            return this.Scripts.AsReadOnly();
-        }
-        
+
         public ModInfos Infos { get; private set; }
         public List<ModScript> Scripts { get; private set; }
-        public List<ModSetting<Type>> Settings { get; private set; }
+        public Dictionary<string, IModSetting> Settings { get; private set; }
         
-        private readonly ProLeakCore.ProLeakCore _core = ProLeakCore.ProLeakCore.Instance;
-        private readonly ManualLogSource _logger = ProLeakCore.ProLeakCore.Logger;
+        private readonly Core _core = Core.Instance;
+        private readonly ManualLogSource _logger = Core.Logger;
     }
-
-
 }

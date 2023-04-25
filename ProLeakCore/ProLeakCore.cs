@@ -59,7 +59,7 @@ namespace ProLeakCore
     {
         public static ProLeakCore Instance { get; set; }
         
-        private List<ProLeakMod> _registeredMods = new List<ProLeakMod>();
+        private Dictionary<string, ProLeakMod> _registeredMods = new Dictionary<string, ProLeakMod>();
 
         private readonly Assembly _assembly = Assembly.GetExecutingAssembly();
         private readonly Harmony _harmony = new(PluginInfo.PLUGIN_GUID);
@@ -81,7 +81,10 @@ namespace ProLeakCore
             Logger = base.Logger;
 
             OnRegisterModRequest += (object sender, RegisterModEventArgs args) => {
-                this._registeredMods.Add(args.Mod);
+                this._registeredMods.Add(args.Mod.Infos.Guid, args.Mod);
+            };
+            OnUnregisterModRequest += (object sender, UnregisterModEventArgs args) => {
+                this._registeredMods.Remove(args.ModGuid);
             };
             
             var typeConfigApi = AccessTools.TypeByName("Assets.Api.ConfigApi");
@@ -111,33 +114,54 @@ namespace ProLeakCore
             Logger.LogInfo($"{PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
+        public bool IsModRegistered(string guid) {
+            return this._registeredMods.ContainsKey(guid);
+        }
+
         public delegate void RegisterModHandler(object sender, RegisterModEventArgs args);
         public event RegisterModHandler OnRegisterModRequest;
         public bool SendRegisterModRequest(object sender) {
             if (sender == null) {
                 return false;
             }
+            
             var mod = sender as ProLeakMod;
+            var guid = mod.Infos.Guid;
+
+            if (this.IsModRegistered(guid)) {
+                return false;
+            }
+            
             var args = new RegisterModEventArgs {
                 Mod = mod
             };
             OnRegisterModRequest?.Invoke(sender, args);
             return true;
         }
-
-        // TODO
-        public delegate void RegisterSettingHandler(object sender, EventArgs e);
-        public event RegisterSettingHandler OnRegisterSettingRequest;
-        public bool SendRegisterSettingRequest(object sender, object data) { // TODO data type
+        
+        public delegate void UnregisterModHandler(object sender, UnregisterModEventArgs args);
+        public event UnregisterModHandler OnUnregisterModRequest;
+        public bool SendUnregisterModRequest(object sender) {
+            if (sender == null) {
+                return false;
+            }
+            
             var mod = sender as ProLeakMod;
-            var args = new RegisterSettingEventArgs {
-                // TODO
+            var guid = mod.Infos.Guid;
+
+            if (!this.IsModRegistered(guid)) {
+                return false;
+            }
+            
+            var args = new UnregisterModEventArgs {
+                ModGuid = mod.Infos.Guid
             };
-            OnRegisterSettingRequest?.Invoke(sender, args);
+            OnUnregisterModRequest?.Invoke(sender, args);
             return true;
         }
-        
+
         // TODO
+        /*
         public delegate void RegisterEventHandler(object sender, EventArgs e);
         public event RegisterEventHandler OnRegisterEventRequest;
         public bool SendRegisterEventRequest(object sender, object data) { // TODO data type
@@ -148,6 +172,7 @@ namespace ProLeakCore
             OnRegisterEventRequest?.Invoke(sender, args);
             return true;
         }
+        */
         
         public void OnDestroy() {
             UnPatch();
@@ -243,15 +268,16 @@ namespace ProLeakCore
         public ProLeakMod Mod;
     }
     
-    public class RegisterSettingEventArgs : EventArgs
+    public class UnregisterModEventArgs : EventArgs
     {
-        // TODO
+        public string ModGuid;
     }
-    
+
+    /*
     public class RegisterEventEventArgs : EventArgs
     {
         // TODO
-    }
+    }*/
     
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     [SuppressMessage("ReSharper", "UnusedMember.Local")]
